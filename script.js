@@ -1,7 +1,4 @@
-// Enhanced NU International Exchange System JavaScript
-// Google Sheets Integration Version
 
-// Configuration - Replace with your Google Apps Script Web App URL
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwp-6lWqTpUsUJ5o374xyukoJKMpujdh8CGVN7TK8GUYkTPtWBlYpJA9qCpWllGysUo/exec';
 
 // Initialize Lucide icons
@@ -96,7 +93,7 @@ class ExchangeDataManager {
         }
     }
 
-static async deleteRecord(index) {
+    static async deleteRecord(index) {
         try {
             const response = await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
@@ -385,30 +382,58 @@ class TableManager {
     }
 
     static async deleteRecord(index) {
-        UIUtils.showLoading(true);
         const data = await ExchangeDataManager.loadData();
-        UIUtils.showLoading(false);
-
         const record = data[index];
-        if (!record) return;
+        if (!record) {
+            UIUtils.showNotification('Record not found.', 'error');
+            return;
+        }
 
-        UIUtils.showConfirmation(
-            `Are you sure you want to delete the record for ${record.name}? This action cannot be undone.`,
-            async () => {
-                UIUtils.showLoading(true);
-                const success = await ExchangeDataManager.deleteRecord(index);
-                UIUtils.showLoading(false);
+        // Create and show confirmation modal
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal-backdrop';
+        modal.innerHTML = `
+            <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md mx-4 modal-content">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 mx-auto bg-red-100 rounded-full flex items-center justify-center mb-4">
+                        <i data-lucide="alert-triangle" class="w-8 h-8 text-red-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Confirm Delete</h3>
+                    <p class="text-gray-600">Are you sure you want to delete the record for <strong>${record.name}</strong>?</p>
+                    <p class="text-sm text-gray-500 mt-2">This action cannot be undone.</p>
+                </div>
+                <div class="flex space-x-4 justify-center">
+                    <button id="cancelDelete" class="btn-secondary px-6 py-2">Cancel</button>
+                    <button id="confirmDelete" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors">Delete</button>
+                </div>
+            </div>
+        `;
 
-                if (success) {
-                    UIUtils.showNotification(`Record for ${record.name} has been deleted.`, 'success');
-                    if (typeof refreshTable === 'function') {
-                        refreshTable();
-                    }
-                } else {
-                    UIUtils.showNotification('Error deleting record.', 'error');
+        document.body.appendChild(modal);
+        initializeIcons();
+
+        // Handle cancel
+        modal.querySelector('#cancelDelete').addEventListener('click', () => {
+            modal.remove();
+        });
+
+        // Handle confirm
+        modal.querySelector('#confirmDelete').addEventListener('click', async () => {
+            modal.remove();
+            
+            UIUtils.showLoading(true);
+            const success = await ExchangeDataManager.deleteRecord(index);
+            UIUtils.showLoading(false);
+
+            if (success) {
+                UIUtils.showNotification(`Record for ${record.name} has been deleted.`, 'success');
+                if (typeof refreshTable === 'function') {
+                    await refreshTable();
                 }
+            } else {
+                UIUtils.showNotification('Error deleting record.', 'error');
             }
-        );
+        });
     }
 }
 
