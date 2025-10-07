@@ -96,10 +96,14 @@ class ExchangeDataManager {
         }
     }
 
-    static async deleteRecord(index) {
+static async deleteRecord(index) {
         try {
-            const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=deleteRecord&index=${index}`, {
-                method: 'POST'
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=deleteRecord&index=${index}`
             });
 
             const result = await response.json();
