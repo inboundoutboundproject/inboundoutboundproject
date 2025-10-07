@@ -1,7 +1,5 @@
-
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwp-6lWqTpUsUJ5o374xyukoJKMpujdh8CGVN7TK8GUYkTPtWBlYpJA9qCpWllGysUo/exec';
 
-// Initialize Lucide icons
 function initializeIcons() {
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
@@ -382,7 +380,10 @@ class TableManager {
     }
 
     static async deleteRecord(index) {
+        UIUtils.showLoading(true);
         const data = await ExchangeDataManager.loadData();
+        UIUtils.showLoading(false);
+        
         const record = data[index];
         if (!record) {
             UIUtils.showNotification('Record not found.', 'error');
