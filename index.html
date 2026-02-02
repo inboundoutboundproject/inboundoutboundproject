@@ -5,6 +5,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NU International Exchange System</title>
+    
+    <!-- Preconnect to external domains for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://script.google.com">
+    
+    <!-- Google Fonts - Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="style.css" as="style">
+    <link rel="preload" href="script.js" as="script">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -83,32 +99,34 @@
         </div>
 
         <!-- Charts Section -->
-        <div class="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl p-6 md:p-8 border border-white/20 mt-12">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 md:mb-8">
-                <h2 class="text-2xl md:text-3xl font-bold text-gray-800">Exchange Program Overview</h2>
+        <div class="bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl shadow-2xl p-8 md:p-10 border border-gray-200/50 mt-12 backdrop-blur-sm">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8 md:mb-10">
+                <h2 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent" style="font-family: 'Poppins', sans-serif;">Exchange Program Overview</h2>
                 <select id="filterType"
-                    class="mt-4 md:mt-0 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 text-sm md:text-base">
+                    class="mt-4 md:mt-0 px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm md:text-base font-medium transition-all duration-300 hover:border-red-400 bg-white shadow-sm" style="font-family: 'Poppins', sans-serif;">
                     <option value="">All (Inbound + Outbound)</option>
                     <option value="inbound">Inbound Only</option>
                     <option value="outbound">Outbound Only</option>
                 </select>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-                <!-- Chart 1 -->
-                <div class="bg-white rounded-3xl shadow-xl p-4 md:p-6 hover-scale flex flex-col items-center">
-                    <h3 class="text-lg md:text-xl lg:text-2xl font-bold text-gray-800 mb-4 md:mb-6 text-center">Inbound
-                        vs Outbound</h3>
-                    <div class="relative w-48 h-48 sm:w-56 sm:h-56 md:w-72 md:h-72">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
+                <!-- Chart 1 - Pie Chart -->
+                <div class="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-200 p-6 md:p-8 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex flex-col items-center">
+                    <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-6 text-center" style="font-family: 'Poppins', sans-serif;">
+                        Inbound vs Outbound
+                    </h3>
+                    <div class="relative w-56 h-56 sm:w-64 sm:h-64 md:w-80 md:h-80">
                         <canvas id="programTypeChart"></canvas>
                     </div>
                 </div>
 
-                <!-- Chart 2 -->
-                <div class="bg-white rounded-3xl shadow-xl p-4 md:p-6 hover-scale flex flex-col items-center">
-                    <h3 class="text-lg md:text-xl lg:text-2xl font-bold text-gray-800 mb-4 md:mb-6 text-center">Students
-                        by Country</h3>
-                    <div class="relative w-full h-64 md:h-72 lg:h-80">
+                <!-- Chart 2 - Bar Chart -->
+                <div class="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-200 p-6 md:p-8 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex flex-col items-center">
+                    <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-6 text-center" style="font-family: 'Poppins', sans-serif;">
+                        Students by Country
+                    </h3>
+                    <div class="relative w-full h-72 md:h-80 lg:h-96">
                         <canvas id="countryChart"></canvas>
                     </div>
                 </div>
@@ -122,13 +140,40 @@
         function navigateToView() { window.location.href = 'view.html'; }
 
         let programTypeChart, countryChart;
+        let cachedData = null; // Store data to avoid multiple API calls
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             loadNavigation();
-            loadStatistics();
             lucide.createIcons();
-            renderPieChart();
-            renderBarChart();
+
+            // Show skeleton loading
+            showSkeletonLoading(true);
+
+            // Load data with timeout to prevent indefinite loading
+            try {
+                // Add timeout promise
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Loading timeout')), 10000)
+                );
+                
+                cachedData = await Promise.race([
+                    ExchangeDataManager.loadData(),
+                    timeoutPromise
+                ]);
+                
+                // Hide skeleton and show actual data
+                showSkeletonLoading(false);
+                
+                // Use cached data for all initial renders
+                loadStatistics();
+                renderPieChart();
+                renderBarChart();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showSkeletonLoading(false);
+                // Show error message to user
+                document.getElementById('total-students').textContent = 'Error';
+            }
 
             const filterSelect = document.getElementById('filterType');
             filterSelect.addEventListener('change', e => {
@@ -137,12 +182,22 @@
             });
         });
 
-        async function loadStatistics(filter = "") {
-            UIUtils.showLoading(true);
-            const rawData = await ExchangeDataManager.loadData();
-            UIUtils.showLoading(false);
+        function showSkeletonLoading(show) {
+            const statsElements = ['total-students', 'countries', 'universities'];
+            statsElements.forEach(id => {
+                const el = document.getElementById(id);
+                if (show) {
+                    el.classList.add('skeleton');
+                    el.textContent = '000';
+                } else {
+                    el.classList.remove('skeleton');
+                }
+            });
+        }
 
-            const data = filter ? rawData.filter(d => d.formType === filter) : rawData;
+        function loadStatistics(filter = "") {
+            // Use cached data instead of loading again
+            const data = filter ? cachedData.filter(d => d.formType === filter) : cachedData;
 
             animateCounter('total-students', data.length);
             animateCounter('countries', new Set(data.map(d => d.country)).size);
@@ -151,52 +206,93 @@
 
 
         function animateCounter(id, target) {
-            let el = document.getElementById(id), n = 0, step = target / 50;
+            let el = document.getElementById(id), n = 0, step = target / 25; // Faster
             let timer = setInterval(() => {
                 n += step;
                 if (n >= target) { n = target; clearInterval(timer); }
                 el.textContent = Math.floor(n);
-            }, 30);
+            }, 20); // Faster interval
         }
 
-        async function renderPieChart() {
-            const data = await ExchangeDataManager.loadData();
+        function renderPieChart() {
+            // Use cached data
             if (programTypeChart) programTypeChart.destroy();
 
-            const inbound = data.filter(d => d.formType === 'inbound').length;
-            const outbound = data.filter(d => d.formType === 'outbound').length;
+            const inbound = cachedData.filter(d => d.formType === 'inbound').length;
+            const outbound = cachedData.filter(d => d.formType === 'outbound').length;
 
             programTypeChart = new Chart(document.getElementById('programTypeChart'), {
-                type: 'doughnut',
+                type: 'pie',  // Changed from 'doughnut' to 'pie' for full circle
                 data: {
                     labels: ['Inbound', 'Outbound'],
                     datasets: [{
                         data: [inbound, outbound],
-                        backgroundColor: ['#16a34a', '#2563eb'],
-                        borderWidth: 3,
-                        borderColor: '#f9fafb',
-                        hoverBorderColor: '#e5e7eb'
+                        backgroundColor: [
+                            'rgba(34, 197, 94, 0.9)',   // Modern green
+                            'rgba(59, 130, 246, 0.9)'   // Modern blue
+                        ],
+                        borderWidth: 2,  // Thin black border for decoration
+                        borderColor: '#000000',  // Black border
+                        hoverBackgroundColor: [
+                            'rgba(34, 197, 94, 1)',
+                            'rgba(59, 130, 246, 1)'
+                        ],
+                        hoverBorderWidth: 3,  // Slightly thicker on hover
+                        hoverBorderColor: '#000000',  // Black border on hover
+                        hoverOffset: 15  // Makes the slice pop out on hover
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: '65%',
                     plugins: {
                         legend: {
                             position: 'bottom',
                             labels: {
-                                color: '#374151',
-                                font: { size: 13, weight: '600' }
+                                color: '#1f2937',
+                                font: { 
+                                    size: 14, 
+                                    weight: '600',
+                                    family: "'Poppins', sans-serif"
+                                },
+                                padding: 20,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: {
+                                size: 14,
+                                weight: '600',
+                                family: "'Poppins', sans-serif"
+                            },
+                            bodyFont: {
+                                size: 13,
+                                family: "'Poppins', sans-serif"
+                            },
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return ` ${context.label}: ${context.parsed} (${percentage}%)`;
+                                }
                             }
                         }
+                    },
+                    animation: {
+                        duration: 1200,
+                        easing: 'easeInOutCubic'
                     }
                 }
             });
         }
-        async function renderBarChart(filter = "") {
-            const rawData = await ExchangeDataManager.loadData();
-            const data = filter ? rawData.filter(d => d.formType === filter) : rawData;
+        function renderBarChart(filter = "") {
+            // Use cached data
+            const data = filter ? cachedData.filter(d => d.formType === filter) : cachedData;
             if (countryChart) countryChart.destroy();
 
             const countryCounts = {};
@@ -204,37 +300,133 @@
                 if (d.country) countryCounts[d.country] = (countryCounts[d.country] || 0) + 1;
             });
 
-            const colors = [
-                '#C1111F', '#2563eb', '#16a34a', '#9333ea', '#f59e0b',
-                '#0ea5e9', '#dc2626', '#059669', '#7c3aed', '#d97706'
+            // Modern gradient colors
+            const gradientColors = [
+                { start: '#ef4444', end: '#dc2626' },  // Red
+                { start: '#3b82f6', end: '#2563eb' },  // Blue
+                { start: '#10b981', end: '#059669' },  // Green
+                { start: '#8b5cf6', end: '#7c3aed' },  // Purple
+                { start: '#f59e0b', end: '#d97706' },  // Amber
+                { start: '#06b6d4', end: '#0891b2' },  // Cyan
+                { start: '#ec4899', end: '#db2777' },  // Pink
+                { start: '#14b8a6', end: '#0d9488' },  // Teal
+                { start: '#f97316', end: '#ea580c' },  // Orange
+                { start: '#6366f1', end: '#4f46e5' }   // Indigo
             ];
-            const barColors = Object.keys(countryCounts).map((_, i) => colors[i % colors.length]);
 
-            countryChart = new Chart(document.getElementById('countryChart'), {
+            const ctx = document.getElementById('countryChart').getContext('2d');
+            const barBackgrounds = Object.keys(countryCounts).map((_, i) => {
+                const colorPair = gradientColors[i % gradientColors.length];
+                const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, colorPair.start);
+                gradient.addColorStop(1, colorPair.end);
+                return gradient;
+            });
+
+            // Transform data to ensure minimum visible height
+            const transformedData = Object.values(countryCounts).map(value => {
+                // If value is very small (1-3), add a small offset for visibility
+                return value > 0 && value < 3 ? value + 2 : value;
+            });
+
+            countryChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: Object.keys(countryCounts),
                     datasets: [{
                         label: 'Students',
-                        data: Object.values(countryCounts),
-                        backgroundColor: barColors,
-                        borderRadius: 12
+                        data: transformedData,  // Use transformed data
+                        backgroundColor: barBackgrounds,
+                        borderColor: '#000000',  // Black border for bars
+                        borderWidth: 2,  // Border thickness
+                        borderRadius: 8,
+                        borderSkipped: false,
+                        barPercentage: 0.7,
+                        categoryPercentage: 0.8
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: {
+                                size: 14,
+                                weight: '600',
+                                family: "'Poppins', sans-serif"
+                            },
+                            bodyFont: {
+                                size: 13,
+                                family: "'Poppins', sans-serif"
+                            },
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    // Get original value from countryCounts
+                                    const country = context.label;
+                                    const originalValue = countryCounts[country];
+                                    return ` ${originalValue} student${originalValue !== 1 ? 's' : ''}`;
+                                }
+                            }
+                        }
+                    },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { color: '#4b5563', font: { size: 12 } },
-                            grid: { color: 'rgba(0,0,0,0.05)' }
+                            suggestedMax: 100,  // Set max to make smaller values more visible
+                            ticks: { 
+                                color: '#1f2937',
+                                font: { 
+                                    size: 16,  // Even larger font
+                                    weight: '700',  // Bolder
+                                    family: "'Poppins', sans-serif"
+                                },
+                                padding: 12,
+                                stepSize: 10  // Smaller steps to show more detail
+                            },
+                            grid: { 
+                                color: 'rgba(0, 0, 0, 0.05)',  // Very light grid lines
+                                lineWidth: 1,
+                                drawBorder: true,
+                                borderColor: '#000000',
+                                borderWidth: 2
+                            },
+                            border: {
+                                display: true,
+                                color: '#000000',
+                                width: 2
+                            }
                         },
                         x: {
-                            ticks: { color: '#4b5563', font: { size: 12 } },
-                            grid: { display: false }
+                            ticks: { 
+                                color: '#1f2937',
+                                font: { 
+                                    size: 12,  // Good readable size
+                                    weight: '600',
+                                    family: "'Poppins', sans-serif"
+                                },
+                                padding: 12,
+                                maxRotation: 45,  // 45 degree angle
+                                minRotation: 45,  // 45 degree angle
+                                autoSkip: false  // Show all labels
+                            },
+                            grid: { 
+                                display: false 
+                            },
+                            border: {
+                                display: true,
+                                color: '#000000',
+                                width: 2
+                            }
                         }
+                    },
+                    animation: {
+                        duration: 1200,
+                        easing: 'easeInOutCubic'
                     }
                 }
             });

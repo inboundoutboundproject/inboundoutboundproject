@@ -28,18 +28,59 @@ function highlightCurrentPage() {
 
     navLinks.forEach(link => {
         const href = link.getAttribute('href');
+        
+        // Remove active class from all links first
+        link.classList.remove('active');
+        
+        // Add active class to current page
         if (href === currentPage || (currentPage === '' && href === 'index.html')) {
-            link.classList.add('bg-white/30');
-            link.classList.remove('bg-white/10');
+            link.classList.add('active');
         }
     });
 }
 
 // Enhanced data management functions with Google Sheets
 class ExchangeDataManager {
-    static async loadData() {
+    static cache = null;
+    static cacheTimestamp = null;
+    static cacheDuration = 30000; // 30 seconds cache
+    static pendingRequest = null; // Track ongoing request
+
+    static async loadData(forceRefresh = false) {
+        // Return cached data if still valid
+        if (!forceRefresh && this.cache && this.cacheTimestamp && 
+            (Date.now() - this.cacheTimestamp < this.cacheDuration)) {
+            return this.cache;
+        }
+
+        // If there's already a pending request, wait for it
+        if (this.pendingRequest) {
+            return this.pendingRequest;
+        }
+
+        // Create new request with timeout
+        this.pendingRequest = this._fetchData();
+        
         try {
-            const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=loadData`);
+            const data = await this.pendingRequest;
+            this.cache = data;
+            this.cacheTimestamp = Date.now();
+            return data;
+        } finally {
+            this.pendingRequest = null;
+        }
+    }
+
+    static async _fetchData() {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+            const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=loadData`, {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
             const result = await response.json();
 
             if (result.success) {
@@ -49,10 +90,20 @@ class ExchangeDataManager {
                 return [];
             }
         } catch (error) {
-            console.error('Error loading data:', error);
-            UIUtils.showNotification('Error loading data from server', 'error');
+            if (error.name === 'AbortError') {
+                console.error('Request timeout');
+                UIUtils.showNotification('Request timeout. Please try again.', 'error');
+            } else {
+                console.error('Error loading data:', error);
+                UIUtils.showNotification('Error loading data from server', 'error');
+            }
             return [];
         }
+    }
+
+    static clearCache() {
+        this.cache = null;
+        this.cacheTimestamp = null;
     }
 
     static async addRecord(record) {
@@ -66,6 +117,9 @@ class ExchangeDataManager {
             });
 
             const result = await response.json();
+            if (result.success) {
+                this.clearCache(); // Clear cache after successful add
+            }
             return result.success;
         } catch (error) {
             console.error('Error adding record:', error);
@@ -84,6 +138,9 @@ class ExchangeDataManager {
             });
 
             const result = await response.json();
+            if (result.success) {
+                this.clearCache(); // Clear cache after successful update
+            }
             return result.success;
         } catch (error) {
             console.error('Error updating record:', error);
@@ -102,6 +159,9 @@ class ExchangeDataManager {
             });
 
             const result = await response.json();
+            if (result.success) {
+                this.clearCache(); // Clear cache after successful delete
+            }
             return result.success;
         } catch (error) {
             console.error('Error deleting record:', error);
@@ -162,10 +222,12 @@ class FormValidator {
 class UIUtils {
     static showNotification(message, type = 'success') {
         const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 transition-all duration-300 ${type === 'success' ? 'bg-green-500 text-white' :
-            type === 'error' ? 'bg-red-500 text-white' :
-                'bg-blue-500 text-white'
-            }`;
+        const bgColor = type === 'success' ? 'bg-green-500 text-white' :
+                       type === 'error' ? 'bg-red-500 text-white' :
+                       type === 'info' ? 'bg-blue-500 text-white' :
+                       'bg-blue-500 text-white';
+        
+        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 transition-all duration-300 ${bgColor}`;
         notification.textContent = message;
 
         document.body.appendChild(notification);
@@ -229,18 +291,24 @@ class UIUtils {
             if (!loader) {
                 loader = document.createElement('div');
                 loader.id = 'global-loader';
-                loader.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                loader.className = 'fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50';
                 loader.innerHTML = `
-                    <div class="bg-white rounded-2xl p-8 flex flex-col items-center">
-                        <div class="animate-spin w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full mb-4"></div>
+                    <div class="bg-white rounded-2xl p-8 flex flex-col items-center shadow-2xl">
+                        <div class="spinner mb-4"></div>
                         <p class="text-gray-700 font-semibold">Loading...</p>
                     </div>
                 `;
                 document.body.appendChild(loader);
             }
+            loader.style.display = 'flex';
         } else {
             if (loader) {
-                loader.remove();
+                loader.style.opacity = '0';
+                setTimeout(() => {
+                    if (loader && loader.parentNode) {
+                        loader.remove();
+                    }
+                }, 200);
             }
         }
     }

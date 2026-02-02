@@ -1,27 +1,136 @@
-<!-- Enhanced Navigation -->
-<nav class="gradient-bg p-10 text-white shadow-lg relative">
-    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse"></div>
-    <div class="container mx-auto max-w-5xl px-4 sm:px-6 py-6 relative z-10">
-        <div class="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-6">
+<!-- Enhanced Modern Navigation - Premium Design -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-            <a href="entry.html"
-                class="nav-link group flex items-center space-x-2 min-w-[180px] px-8 py-4 rounded-full  hover:bg-gradient-to-r from-red-600 to-red-700 hover:to-red-700/30 hover:scale-105 transition-all duration-300 font-semibold text-base md:text-lg justify-center shadow-md">
-                <i data-lucide="plus-circle" class="w-6 h-6"></i>
-                <span>Registration</span>
+<nav class="sticky top-0 z-50 backdrop-blur-xl shadow-2xl border-b border-red-900/20"
+    style="background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 50%, #991b1b 100%); font-family: 'Poppins', sans-serif;">
+    <!-- Animated background gradient -->
+    <div class="absolute inset-0 opacity-30"
+        style="background: linear-gradient(135deg, rgba(69, 10, 10, 0.4) 0%, rgba(127, 29, 29, 0.2) 50%, rgba(69, 10, 10, 0.4) 100%);">
+    </div>
+
+    <!-- Subtle animated shine effect -->
+    <div class="absolute inset-0 opacity-20 animate-pulse"
+        style="background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);">
+    </div>
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="flex items-center justify-between h-32 md:h-36">
+
+            <!-- Logo/Brand Section -->
+            <a href="index.html" class="flex items-center space-x-4 group">
+                <div class="relative">
+                    <!-- Glow effect -->
+                    <div
+                        class="absolute inset-0 bg-white/30 rounded-2xl blur-lg group-hover:bg-white/40 transition-all duration-500">
+                    </div>
+                    <div
+                        class="relative bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-sm p-3 rounded-2xl border border-white/30 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-xl">
+                        <i data-lucide="globe-2" class="w-10 h-10 text-white drop-shadow-lg"></i>
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <h1 class="text-2xl font-bold text-white tracking-tight drop-shadow-md"
+                        style="letter-spacing: -0.5px;">NU Exchange</h1>
+                    <p class="text-sm text-red-50/90 font-medium">International Program</p>
+                </div>
             </a>
 
-            <a href="index.html"
-                class="nav-link group flex items-center space-x-2 min-w-[180px] px-8 py-4 rounded-full  hover:bg-gradient-to-r from-red-600 to-red-700 hover:to-red-700/30 hover:scale-105 transition-all duration-300 font-semibold text-base md:text-lg justify-center shadow-md">
-                <i data-lucide="home" class="w-6 h-6"></i>
-                <span>Home</span>
-            </a>
+            <!-- Navigation Links -->
+            <div class="flex items-center gap-3 md:gap-4">
 
-            <a href="view.html"
-                class="nav-link group flex items-center space-x-2 min-w-[180px] px-8 py-4 rounded-full  hover:bg-gradient-to-r from-red-600 to-red-700 hover:to-red-700/30 hover:scale-105 transition-all duration-300 font-semibold text-base md:text-lg justify-center shadow-md">
-                <i data-lucide="database" class="w-6 h-6"></i>
-                <span>View Records</span>
-            </a>
+                <!-- Home Link -->
+                <a href="index.html"
+                    class="nav-link group relative flex items-center space-x-2.5 px-5 md:px-7 py-3 rounded-xl bg-white/10 transition-all duration-300 border border-white/20 shadow-lg backdrop-blur-sm hover:bg-red-900/40 hover:border-red-800/60 hover:shadow-2xl">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-r from-red-950/0 via-red-900/20 to-red-950/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 rounded-xl">
+                    </div>
+                    <i data-lucide="home" class="w-5 h-5 text-white relative z-10 drop-shadow"></i>
+                    <span
+                        class="hidden sm:inline text-white font-semibold relative z-10 drop-shadow text-sm md:text-base">Home</span>
+                </a>
+
+                <!-- Registration Link -->
+                <a href="entry.html"
+                    class="nav-link group relative flex items-center space-x-2.5 px-5 md:px-7 py-3 rounded-xl bg-white/10 transition-all duration-300 border border-white/20 shadow-lg backdrop-blur-sm hover:bg-red-900/40 hover:border-red-800/60 hover:shadow-2xl">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-r from-red-950/0 via-red-900/20 to-red-950/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 rounded-xl">
+                    </div>
+                    <i data-lucide="user-plus" class="w-5 h-5 text-white relative z-10 drop-shadow"></i>
+                    <span
+                        class="hidden sm:inline text-white font-semibold relative z-10 drop-shadow text-sm md:text-base">Register</span>
+                </a>
+
+                <!-- View Records Link -->
+                <a href="view.html"
+                    class="nav-link group relative flex items-center space-x-2.5 px-5 md:px-7 py-3 rounded-xl bg-white/10 transition-all duration-300 border border-white/20 shadow-lg backdrop-blur-sm hover:bg-red-900/40 hover:border-red-800/60 hover:shadow-2xl">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-r from-red-950/0 via-red-900/20 to-red-950/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 rounded-xl">
+                    </div>
+                    <i data-lucide="database" class="w-5 h-5 text-white relative z-10 drop-shadow"></i>
+                    <span
+                        class="hidden sm:inline text-white font-semibold relative z-10 drop-shadow text-sm md:text-base">Records</span>
+                </a>
+
+            </div>
 
         </div>
     </div>
+
+    <!-- Bottom gradient line with glow -->
+    <div
+        class="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/40 to-transparent shadow-lg shadow-white/20">
+    </div>
 </nav>
+
+<style>
+    /* Enhanced active state for navigation */
+    .nav-link.active {
+        background: rgba(127, 29, 29, 0.5) !important;
+        /* Deep dark red instead of white */
+        border-color: rgba(153, 27, 27, 0.8) !important;
+        /* Dark red border */
+        box-shadow: 0 0 25px rgba(127, 29, 29, 0.8), inset 0 0 20px rgba(127, 29, 29, 0.4), 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Active indicator - bottom line */
+    .nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 75%;
+        height: 4px;
+        background: white;
+        /* White line as requested */
+        border-radius: 2px;
+        box-shadow: 0 0 10px rgba(61, 39, 39, 0.8);
+    }
+
+    /* Enhanced backdrop blur */
+    @supports (backdrop-filter: blur(20px)) {
+        nav {
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+        }
+    }
+
+    /* Smooth animations */
+    .nav-link {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .nav-link:hover {
+        transform: translateY(-1px);
+        /* Subtle lift without scale to prevent overlap */
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 640px) {
+        .nav-link span {
+            font-size: 0.875rem;
+        }
+    }
+</style>
