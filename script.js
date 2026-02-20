@@ -194,23 +194,18 @@ class FormValidator {
     static validateForm(formData) {
         const errors = [];
 
-        if (!this.validateRequired(formData.name)) {
-            errors.push('Full name is required');
+        // Validate email format only if provided
+        if (formData.email && !this.validateEmail(formData.email)) {
+            errors.push('Invalid email address format');
         }
 
-        if (!this.validateRequired(formData.studentId)) {
-            errors.push('Student ID is required');
-        }
-
-        if (!this.validateEmail(formData.email)) {
-            errors.push('Valid email address is required');
-        }
-
-        if (!this.validateBudget(formData.budget)) {
+        // Validate budget only if provided
+        if (formData.budget && !this.validateBudget(formData.budget)) {
             errors.push('Budget must be a valid positive number');
         }
 
-        if (!this.validateDateRange(formData.fromdate, formData.todate)) {
+        // Validate date range only if both dates are provided
+        if (formData.fromdate && formData.todate && !this.validateDateRange(formData.fromdate, formData.todate)) {
             errors.push('End date must be after start date');
         }
 
