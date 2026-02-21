@@ -132,6 +132,62 @@
                 </div>
             </div>
         </div>
+
+        <!-- Year-based Charts Section (Separate) -->
+        <div class="bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl shadow-2xl p-8 md:p-10 border border-gray-200/50 mt-12 backdrop-blur-sm">
+            <!-- Header + Filters -->
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between mb-8 md:mb-10 gap-6">
+                <h2 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent" style="font-family: 'Poppins', sans-serif;">Travel Year Analysis</h2>
+
+                <div class="flex flex-col gap-4">
+                    <!-- Type filter -->
+                    <div class="flex items-center gap-3">
+                        <label class="text-sm font-semibold text-gray-600" style="font-family: 'Poppins', sans-serif;">Program Type:</label>
+                        <select id="yearFilterType"
+                            class="px-4 py-2 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm font-medium bg-white shadow-sm transition-all hover:border-red-400" style="font-family: 'Poppins', sans-serif;"
+                            onchange="applyYearFilters()">
+                            <option value="">All (Inbound + Outbound)</option>
+                            <option value="inbound">Inbound Only</option>
+                            <option value="outbound">Outbound Only</option>
+                        </select>
+                    </div>
+
+                    <!-- Year select (populated dynamically) -->
+                    <div class="flex items-center gap-3">
+                        <label class="text-sm font-semibold text-gray-600" style="font-family: 'Poppins', sans-serif;">Year:</label>
+                        <select id="yearSelectFilter"
+                            class="px-4 py-2 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm font-medium bg-white shadow-sm transition-all hover:border-red-400" style="font-family: 'Poppins', sans-serif;"
+                            onchange="applyYearFilters()">
+                            <option value="">All Years</option>
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
+                <!-- Chart 3 - Students by Year -->
+                <div class="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-200 p-6 md:p-8 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex flex-col items-center">
+                    <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-6 text-center" style="font-family: 'Poppins', sans-serif;">
+                        Students by Destination
+                    </h3>
+                    <div class="relative w-full h-72 md:h-80 lg:h-96">
+                        <canvas id="yearChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 4 - Inbound vs Outbound per Year -->
+                <div class="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-200 p-6 md:p-8 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex flex-col items-center">
+                    <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-6 text-center" style="font-family: 'Poppins', sans-serif;">
+                        Inbound vs Outbound by Year
+                    </h3>
+                    <div class="relative w-full h-72 md:h-80 lg:h-96">
+                        <canvas id="yearTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
@@ -139,7 +195,7 @@
         function navigateToEntry() { window.location.href = 'entry.html'; }
         function navigateToView() { window.location.href = 'view.html'; }
 
-        let programTypeChart, countryChart;
+        let programTypeChart, countryChart, yearChart, yearTypeChart;
         let cachedData = null; // Store data to avoid multiple API calls
 
         document.addEventListener('DOMContentLoaded', async () => {
@@ -168,6 +224,9 @@
                 loadStatistics();
                 renderPieChart();
                 renderBarChart();
+                renderYearChart();
+                renderYearTypeChart();
+                buildYearCheckboxes();
             } catch (error) {
                 console.error('Error loading data:', error);
                 showSkeletonLoading(false);
@@ -431,6 +490,189 @@
                 }
             });
         }
+
+        // Build year options in select — from 2011 to current year
+        function buildYearCheckboxes() {
+            const currentYear = new Date().getFullYear();
+            const years = [];
+            for (let y = 2011; y <= currentYear; y++) years.push(y);
+
+            const sel = document.getElementById('yearSelectFilter');
+            if (!sel) return;
+
+            sel.innerHTML = `<option value="">All Years</option>` +
+                years.map(y => `<option value="${y}">${y}</option>`).join('');
+        }
+
+        function applyYearFilters() {
+            const typeFilter = document.getElementById('yearFilterType')?.value || '';
+            const yearFilter = document.getElementById('yearSelectFilter')?.value || '';
+
+            let filtered = cachedData.filter(d => {
+                if (!d.fromdate) return false;
+                const year = new Date(d.fromdate).getFullYear();
+                if (isNaN(year)) return false;
+                if (yearFilter && year !== parseInt(yearFilter)) return false;
+                const ft = (d.formType || 'inbound').toLowerCase();
+                if (typeFilter && ft !== typeFilter) return false;
+                return true;
+            });
+
+            renderYearChart(filtered);
+            renderYearTypeChart(filtered);
+        }
+
+        // Chart 3: Students by Destination Country (Pie Chart)
+        function renderYearChart(data) {
+            if (!data) data = cachedData;
+            if (yearChart) yearChart.destroy();
+
+            // Count students per destination country
+            const countryCounts = {};
+            data.forEach(d => {
+                if (d.country) {
+                    countryCounts[d.country] = (countryCounts[d.country] || 0) + 1;
+                }
+            });
+
+            const countries = Object.keys(countryCounts).sort();
+            const counts = countries.map(c => countryCounts[c]);
+            const total = counts.reduce((a, b) => a + b, 0);
+
+            const pieColors = [
+                'rgba(239,68,68,0.88)',   // Red
+                'rgba(59,130,246,0.88)',   // Blue
+                'rgba(16,185,129,0.88)',   // Green
+                'rgba(139,92,246,0.88)',   // Purple
+                'rgba(245,158,11,0.88)',   // Amber
+                'rgba(6,182,212,0.88)',    // Cyan
+                'rgba(236,72,153,0.88)',   // Pink
+                'rgba(20,184,166,0.88)',   // Teal
+                'rgba(249,115,22,0.88)',   // Orange
+                'rgba(99,102,241,0.88)',   // Indigo
+                'rgba(132,204,22,0.88)',   // Lime
+                'rgba(234,179,8,0.88)',    // Yellow
+            ];
+
+            const ctx = document.getElementById('yearChart').getContext('2d');
+
+            yearChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: countries,
+                    datasets: [{
+                        data: counts,
+                        backgroundColor: countries.map((_, i) => pieColors[i % pieColors.length]),
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                        hoverBorderColor: '#000000',
+                        hoverBorderWidth: 2,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '50%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#1f2937',
+                                font: { size: 11, weight: '600', family: "'Poppins', sans-serif" },
+                                padding: 10,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                generateLabels: (chart) => {
+                                    const data = chart.data;
+                                    return data.labels.map((label, i) => ({
+                                        text: `${label} (${data.datasets[0].data[i]})`,
+                                        fillStyle: data.datasets[0].backgroundColor[i],
+                                        strokeStyle: '#fff',
+                                        lineWidth: 1,
+                                        pointStyle: 'circle',
+                                        index: i
+                                    }));
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.85)',
+                            titleFont: { size: 14, weight: '700', family: "'Poppins', sans-serif" },
+                            bodyFont: { size: 13, family: "'Poppins', sans-serif" },
+                            padding: 12, cornerRadius: 8,
+                            callbacks: {
+                                label: c => {
+                                    const val = c.parsed;
+                                    const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                                    return ` ${val} student${val !== 1 ? 's' : ''} (${pct}%)`;
+                                }
+                            }
+                        }
+                    },
+                    animation: { duration: 1000, easing: 'easeInOutQuart' }
+                }
+            });
+        }
+
+        // Chart 4: Students by year — Inbound vs Outbound count
+        function renderYearTypeChart(data) {
+            if (!data) data = cachedData;
+            if (yearTypeChart) yearTypeChart.destroy();
+
+            const yearData = {};
+            data.forEach(d => {
+                if (d.fromdate) {
+                    const year = new Date(d.fromdate).getFullYear();
+                    if (!isNaN(year)) {
+                        if (!yearData[year]) yearData[year] = { inbound: 0, outbound: 0 };
+                        const ft = (d.formType || 'inbound').toLowerCase();
+                        if (ft === 'outbound') yearData[year].outbound += 1;
+                        else yearData[year].inbound += 1;
+                    }
+                }
+            });
+
+            const sortedYears = Object.keys(yearData).sort();
+            const ctx = document.getElementById('yearTypeChart').getContext('2d');
+
+            yearTypeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedYears,
+                    datasets: [
+                        { label: 'Inbound', data: sortedYears.map(y => yearData[y].inbound), backgroundColor: 'rgba(34,197,94,0.85)', borderColor: '#000000', borderWidth: 2, borderRadius: 6, borderSkipped: false },
+                        { label: 'Outbound', data: sortedYears.map(y => yearData[y].outbound), backgroundColor: 'rgba(59,130,246,0.85)', borderColor: '#000000', borderWidth: 2, borderRadius: 6, borderSkipped: false }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#1f2937', font: { size: 13, weight: '600', family: "'Poppins', sans-serif" }, padding: 16, usePointStyle: true, pointStyle: 'circle' } },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleFont: { size: 14, weight: '600', family: "'Poppins', sans-serif" },
+                            bodyFont: { size: 13, family: "'Poppins', sans-serif" },
+                            padding: 12, cornerRadius: 8,
+                            callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y} student${c.parsed.y !== 1 ? 's' : ''}` }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Students', color: '#6b7280', font: { size: 12, weight: '600', family: "'Poppins', sans-serif" } },
+                            ticks: { color: '#1f2937', font: { size: 13, weight: '600', family: "'Poppins', sans-serif" }, padding: 8, stepSize: 1 },
+                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            border: { display: true, color: '#000000', width: 2 }
+                        },
+                        x: { ticks: { color: '#1f2937', font: { size: 13, weight: '600', family: "'Poppins', sans-serif" }, padding: 8 }, grid: { display: false }, border: { display: true, color: '#000000', width: 2 } }
+                    },
+                    animation: { duration: 1000, easing: 'easeInOutCubic' }
+                }
+            });
+        }
+
     </script>
 </body>
 

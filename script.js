@@ -28,10 +28,10 @@ function highlightCurrentPage() {
 
     navLinks.forEach(link => {
         const href = link.getAttribute('href');
-        
+
         // Remove active class from all links first
         link.classList.remove('active');
-        
+
         // Add active class to current page
         if (href === currentPage || (currentPage === '' && href === 'index.html')) {
             link.classList.add('active');
@@ -48,7 +48,7 @@ class ExchangeDataManager {
 
     static async loadData(forceRefresh = false) {
         // Return cached data if still valid
-        if (!forceRefresh && this.cache && this.cacheTimestamp && 
+        if (!forceRefresh && this.cache && this.cacheTimestamp &&
             (Date.now() - this.cacheTimestamp < this.cacheDuration)) {
             return this.cache;
         }
@@ -60,7 +60,7 @@ class ExchangeDataManager {
 
         // Create new request with timeout
         this.pendingRequest = this._fetchData();
-        
+
         try {
             const data = await this.pendingRequest;
             this.cache = data;
@@ -218,10 +218,10 @@ class UIUtils {
     static showNotification(message, type = 'success') {
         const notification = document.createElement('div');
         const bgColor = type === 'success' ? 'bg-green-500 text-white' :
-                       type === 'error' ? 'bg-red-500 text-white' :
-                       type === 'info' ? 'bg-blue-500 text-white' :
-                       'bg-blue-500 text-white';
-        
+            type === 'error' ? 'bg-red-500 text-white' :
+                type === 'info' ? 'bg-blue-500 text-white' :
+                    'bg-blue-500 text-white';
+
         notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 transition-all duration-300 ${bgColor}`;
         notification.textContent = message;
 
@@ -446,7 +446,7 @@ class TableManager {
         UIUtils.showLoading(true);
         const data = await ExchangeDataManager.loadData();
         UIUtils.showLoading(false);
-        
+
         const record = data[index];
         if (!record) {
             UIUtils.showNotification('Record not found.', 'error');
@@ -484,7 +484,7 @@ class TableManager {
         // Handle confirm
         modal.querySelector('#confirmDelete').addEventListener('click', async () => {
             modal.remove();
-            
+
             UIUtils.showLoading(true);
             const success = await ExchangeDataManager.deleteRecord(index);
             UIUtils.showLoading(false);
